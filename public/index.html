@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Love Letter</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💌</text></svg>">
+</head>
+<body>
+
+<!-- Join screen -->
+<div id="screen-join" class="screen">
+  <div class="join-card">
+    <h1>💌 Love Letter</h1>
+    <p class="tagline">Get your letter to the Princess. Knock everyone else's out of the running.</p>
+    <label for="name-input">Your name</label>
+    <input id="name-input" maxlength="20" autocomplete="off" placeholder="e.g. Blake">
+    <div class="join-actions">
+      <button id="btn-create" class="primary">Create a room</button>
+      <div class="join-row">
+        <input id="code-input" maxlength="4" autocomplete="off" placeholder="CODE">
+        <button id="btn-join">Join</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lobby screen -->
+<div id="screen-lobby" class="screen hidden">
+  <div class="join-card">
+    <h1>💌 Love Letter</h1>
+    <p class="tagline">Share this room code with your coworkers:</p>
+    <div id="lobby-code" class="room-code"></div>
+    <ul id="lobby-members" class="member-list"></ul>
+    <div id="lobby-chat" class="chat">
+      <div class="chat-messages"></div>
+      <div class="chat-row">
+        <input class="chat-input" maxlength="300" autocomplete="off" placeholder="Chat with the room…">
+        <button class="chat-send">Send</button>
+      </div>
+    </div>
+    <p id="lobby-hint" class="hint"></p>
+    <button id="btn-start" class="primary hidden">Start game</button>
+    <button id="btn-leave" class="linkish">Leave room</button>
+  </div>
+</div>
+
+<!-- Game screen -->
+<div id="screen-game" class="screen hidden">
+  <header id="game-header">
+    <span class="brand">💌 Love Letter</span>
+    <span id="round-label"></span>
+    <span id="deck-label"></span>
+    <span id="room-label"></span>
+    <button id="btn-end" class="linkish hidden">End game</button>
+  </header>
+
+  <div id="table">
+    <div id="opponents"></div>
+
+    <div id="center">
+      <div id="banner" class="hidden"></div>
+      <div id="faceup-area" class="hidden">
+        <span class="faceup-label">Set aside:</span>
+        <span id="faceup-cards"></span>
+      </div>
+      <div id="center-panels">
+        <div id="log"></div>
+        <div id="game-chat" class="chat">
+          <div class="chat-messages"></div>
+          <div class="chat-row">
+            <input class="chat-input" maxlength="300" autocomplete="off" placeholder="Chat…">
+            <button class="chat-send">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="me-area">
+      <div id="me-info"></div>
+      <div id="hand"></div>
+      <div id="me-discards" class="discard-row"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Target / guess picker -->
+<div id="modal-backdrop" class="hidden">
+  <div id="modal">
+    <h2 id="modal-title"></h2>
+    <div id="modal-options"></div>
+    <button id="modal-cancel" class="linkish">Cancel</button>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+<div id="conn-banner" class="hidden">Reconnecting…</div>
+
+<script src="client.js"></script>
+</body>
+</html>
