@@ -3,16 +3,16 @@
 // ---------- Card metadata (mirrors game.js) ----------
 
 const CARDS = {
-  0: { name: 'Spy',        icon: '🕵️', text: 'No effect. Sole Spy discarder gains a token at round end.' },
-  1: { name: 'Guard',      icon: '🗡️', text: 'Guess another player\'s card (not Guard). Correct: they\'re out.' },
-  2: { name: 'Priest',     icon: '🕯️', text: 'Look at another player\'s hand.' },
-  3: { name: 'Baron',      icon: '⚖️', text: 'Compare hands. Lower card is out.' },
-  4: { name: 'Handmaid',   icon: '🛡️', text: 'Protected until your next turn.' },
-  5: { name: 'Prince',     icon: '🤴', text: 'A player (or you) discards their hand and draws.' },
-  6: { name: 'Chancellor', icon: '📜', text: 'Draw 2, keep 1, return the rest to the deck.' },
-  7: { name: 'King',       icon: '👑', text: 'Trade hands with another player.' },
-  8: { name: 'Countess',   icon: '🌹', text: 'Must play if you hold King or Prince.' },
-  9: { name: 'Princess',   icon: '👸', text: 'Play or discard this and you\'re out.' },
+  0: { name: 'Spy',        icon: '🕵️', count: 2, text: 'No effect. Sole Spy discarder gains a token at round end.' },
+  1: { name: 'Guard',      icon: '🗡️', count: 6, text: 'Guess another player\'s card (not Guard). Correct: they\'re out.' },
+  2: { name: 'Priest',     icon: '🕯️', count: 2, text: 'Look at another player\'s hand.' },
+  3: { name: 'Baron',      icon: '⚖️', count: 2, text: 'Compare hands. Lower card is out.' },
+  4: { name: 'Handmaid',   icon: '🛡️', count: 2, text: 'Protected until your next turn.' },
+  5: { name: 'Prince',     icon: '🤴', count: 2, text: 'A player (or you) discards their hand and draws.' },
+  6: { name: 'Chancellor', icon: '📜', count: 2, text: 'Draw 2, keep 1, return the rest to the deck.' },
+  7: { name: 'King',       icon: '👑', count: 1, text: 'Trade hands with another player.' },
+  8: { name: 'Countess',   icon: '🌹', count: 1, text: 'Must play if you hold King or Prince.' },
+  9: { name: 'Princess',   icon: '👸', count: 1, text: 'Play or discard this and you\'re out.' },
 };
 
 const $ = (id) => document.getElementById(id);
@@ -102,6 +102,48 @@ function esc(s) {
   return d.innerHTML;
 }
 
+function escRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// One color per seat. Assigned by position in the roster, which the server
+// builds in a single fixed order — so a given player gets the same color on
+// every client's screen. Six colors: the max table size.
+const PLAYER_COLORS = ['#d4a94e', '#e8738f', '#79c99a', '#74b3e6', '#c39ae8', '#e8a15c'];
+
+// Ordered player list, valid in both lobby (members) and game (players); same
+// order and ids across all clients.
+function roster() {
+  if (state && state.members && state.members.length) return state.members;
+  if (state && state.game && state.game.players) return state.game.players;
+  return [];
+}
+
+function playerColor(id) {
+  const r = roster();
+  const idx = r.findIndex(p => p.id === id);
+  return PLAYER_COLORS[(idx < 0 ? 0 : idx) % PLAYER_COLORS.length];
+}
+
+// Wraps any player name found in a log line in a span tinted with that player's
+// seat color. Longest names are matched first so one name can't clip a longer
+// one it's a prefix of.
+function colorizeNames(text) {
+  const escaped = esc(text);
+  const named = roster()
+    .filter(p => p.name && p.name.trim())
+    .slice()
+    .sort((a, b) => b.name.length - a.name.length);
+  if (!named.length) return escaped;
+  const alt = named.map(p => escRegex(esc(p.name))).join('|');
+  const re = new RegExp('(' + alt + ')', 'g');
+  // Single pass: replaced markup is never rescanned, so no nested spans.
+  return escaped.replace(re, (m) => {
+    const p = named.find(pl => esc(pl.name) === m);
+    return `<span class="player-name" style="color:${playerColor(p.id)}">${m}</span>`;
+  });
+}
+
 function cardEl(value, { mini = false, hidden = false } = {}) {
   const div = document.createElement('div');
   div.className = 'card' + (mini ? ' mini' : '');
@@ -117,7 +159,96 @@ function cardEl(value, { mini = false, hidden = false } = {}) {
     <span class="name">${c.name}</span>
     <span class="text">${esc(c.text)}</span>
     <span class="value flip">${value}</span>`;
+  // Played (mini) cards expand on click to reveal their effect text.
+  if (mini) {
+    div.classList.add('expandable');
+    div.title = 'Click to see what this card does';
+    div.addEventListener('click', () => expandCard(value));
+  }
   return div;
+}
+
+// ---------- Expanded (zoomed) card ----------
+
+let closeExpandOnKey = null;
+
+function expandCard(value) {
+  closeExpandedCard();
+  const backdrop = document.createElement('div');
+  backdrop.id = 'card-zoom-backdrop';
+  const card = cardEl(value); // full-size card, with its effect text visible
+  card.classList.remove('expandable'); // already expanded — no title/re-click
+  card.title = '';
+  card.classList.add('zoomed');
+  backdrop.appendChild(card);
+  // Click anywhere outside the card closes it.
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeExpandedCard();
+  });
+  document.body.appendChild(backdrop);
+  closeExpandOnKey = (e) => { if (e.key === 'Escape') closeExpandedCard(); };
+  document.addEventListener('keydown', closeExpandOnKey);
+}
+
+function closeExpandedCard() {
+  const existing = $('card-zoom-backdrop');
+  if (existing) existing.remove();
+  if (closeExpandOnKey) {
+    document.removeEventListener('keydown', closeExpandOnKey);
+    closeExpandOnKey = null;
+  }
+}
+
+// ---------- Card rules reference ----------
+
+let closeRulesOnKey = null;
+
+function showRules() {
+  closeRules();
+  const backdrop = document.createElement('div');
+  backdrop.id = 'rules-backdrop';
+
+  const rows = Object.keys(CARDS)
+    .map(Number)
+    .sort((a, b) => b - a) // Princess (9) down to Spy (0), matching the rulebook
+    .map(v => {
+      const c = CARDS[v];
+      return `
+        <li class="rules-row">
+          <span class="rules-value">${v}</span>
+          <span class="rules-icon">${c.icon}</span>
+          <span class="rules-name">${esc(c.name)} <span class="rules-count">×${c.count}</span></span>
+          <span class="rules-text">${esc(c.text)}</span>
+        </li>`;
+    })
+    .join('');
+
+  const dialog = document.createElement('div');
+  dialog.id = 'rules-dialog';
+  dialog.innerHTML = `
+    <h2>📖 Card Rules</h2>
+    <ul class="rules-list">${rows}</ul>
+    <button class="rules-close linkish">Close</button>`;
+  backdrop.appendChild(dialog);
+
+  // Click anywhere outside the dialog closes it.
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeRules();
+  });
+  dialog.querySelector('.rules-close').addEventListener('click', closeRules);
+
+  document.body.appendChild(backdrop);
+  closeRulesOnKey = (e) => { if (e.key === 'Escape') closeRules(); };
+  document.addEventListener('keydown', closeRulesOnKey);
+}
+
+function closeRules() {
+  const existing = $('rules-backdrop');
+  if (existing) existing.remove();
+  if (closeRulesOnKey) {
+    document.removeEventListener('keydown', closeRulesOnKey);
+    closeRulesOnKey = null;
+  }
 }
 
 // Which entries of nowArr weren't in prevArr (handles duplicate values).
@@ -172,6 +303,7 @@ function renderChat(rootId) {
     if (m.id) {
       const who = document.createElement('span');
       who.className = 'who';
+      who.style.color = playerColor(m.id); // same per-player color as the timeline
       who.textContent = `${m.name}: `;
       div.appendChild(who);
     }
@@ -292,16 +424,44 @@ function renderGame() {
   const log = $('log');
   const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 30;
   log.innerHTML = '';
-  const animFrom = g.log.length > seen.logLen ? seen.logLen : g.log.length;
-  g.log.forEach((e, i) => {
+  const oldLen = Math.min(seen.logLen, g.log.length);
+  const entries = g.log;
+  let i = 0;
+  while (i < entries.length) {
+    const e = entries[i];
+    let text = e.text;
+    let morph = false;
+    let consumedPlay = false;
+    let pending = false;
+
+    // Collapse "X's turn." into the "X plays the …" line so a turn is one row,
+    // not two. When the play arrives after the turn row is already on screen,
+    // that row updates in place with a subtle animation instead of a new line.
+    // Until the play lands, the row shows an animated "…" waiting indicator.
+    const turnMatch = /^(.+)'s turn\.$/.exec(e.text);
+    if (turnMatch) {
+      const name = turnMatch[1];
+      const next = entries[i + 1];
+      if (next && !next.private && next.text.startsWith(name + ' plays')) {
+        text = next.text;
+        consumedPlay = true;
+        if (i < oldLen && i + 1 >= oldLen) morph = true; // turn was shown, play is new
+      } else {
+        pending = true;
+        text = e.text.replace(/\.$/, ''); // drop the period; the dots take its place
+      }
+    }
+
     const div = document.createElement('div');
     div.className = 'entry'
       + (e.private ? ' private' : '')
-      + (e.text.startsWith('—') ? ' divider' : '')
-      + (i >= animFrom ? ' new' : '');
-    div.textContent = e.text;
+      + (text.startsWith('—') ? ' divider' : '')
+      + (morph ? ' morph' : (i >= oldLen ? ' new' : ''));
+    div.innerHTML = colorizeNames(text)
+      + (pending ? '<span class="loading-dots" aria-hidden="true"></span>' : '');
     log.appendChild(div);
-  });
+    i += consumedPlay ? 2 : 1;
+  }
   if (atBottom) log.scrollTop = log.scrollHeight;
 
   // Your area
@@ -461,6 +621,7 @@ $('btn-leave').onclick = () => {
 $('btn-end').onclick = () => {
   if (confirm('End the game for everyone and return to the lobby?')) send({ type: 'endGame' });
 };
+$('btn-rules').onclick = showRules;
 setupChat('lobby-chat');
 setupChat('game-chat');
 $('modal-cancel').onclick = closeModal;
