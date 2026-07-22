@@ -294,6 +294,8 @@ input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 8px rgba
 #rules-dialog h2 { color: var(--gold); text-align: center; margin-bottom: 1rem; }
 .rules-list {
   list-style: none;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #5a4450 transparent;
@@ -409,13 +411,15 @@ input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 8px rgba
 #log .player-name { font-weight: bold; }
 /* Waiting indicator on a pending "X's turn" row — cycles 1 → 2 → 3 dots */
 #log .loading-dots::after {
-  content: '.';
-  animation: loading-dots 1.5s steps(1, end) infinite;
+  content: '...';
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  animation: loading-dots 1.5s steps(3, end) infinite;
 }
 @keyframes loading-dots {
-  0%   { content: '.'; }
-  33%  { content: '..'; }
-  66%  { content: '...'; }
+  from { width: 0.4em; }
+  to   { width: 1.2em; }
 }
 
 /* Chat */
@@ -567,6 +571,7 @@ input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 8px rgba
 @media (max-width: 640px) {
   .card { width: 88px; height: 126px; }
   .card .text { display: none; }
+  .card.zoomed .text { display: block; }
   .card .icon { font-size: 2rem; }
   #hand { min-height: 126px; }
   .opp { min-width: 150px; }

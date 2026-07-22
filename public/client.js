@@ -3,16 +3,16 @@
 // ---------- Card metadata (mirrors game.js) ----------
 
 const CARDS = {
-  0: { name: 'Spy',        icon: '🕵️', count: 2, text: 'No effect. Sole Spy discarder gains a token at round end.' },
-  1: { name: 'Guard',      icon: '🗡️', count: 6, text: 'Guess another player\'s card (not Guard). Correct: they\'re out.' },
+  0: { name: 'Spy',        icon: '🕵️', count: 2, text: 'No effect. If you are the only player left in the round who played or discarded a Spy, gain a token.' },
+  1: { name: 'Guard',      icon: '🗡️', count: 6, text: 'Guess another player\'s card (not Guard). If correct, they are out.' },
   2: { name: 'Priest',     icon: '🕯️', count: 2, text: 'Look at another player\'s hand.' },
-  3: { name: 'Baron',      icon: '⚖️', count: 2, text: 'Compare hands. Lower card is out.' },
-  4: { name: 'Handmaid',   icon: '🛡️', count: 2, text: 'Protected until your next turn.' },
-  5: { name: 'Prince',     icon: '🤴', count: 2, text: 'A player (or you) discards their hand and draws.' },
-  6: { name: 'Chancellor', icon: '📜', count: 2, text: 'Draw 2, keep 1, return the rest to the deck.' },
+  3: { name: 'Baron',      icon: '⚖️', count: 2, text: 'Compare hands with another player. Lower card is out.' },
+  4: { name: 'Handmaid',   icon: '🛡️', count: 2, text: 'You are protected until your next turn.' },
+  5: { name: 'Prince',     icon: '🤴', count: 2, text: 'Choose a player (may be yourself) to discard their hand and draw a new card.' },
+  6: { name: 'Chancellor', icon: '📜', count: 2, text: 'Draw 2 cards, keep 1 of the 3, return the rest to the bottom of the deck.' },
   7: { name: 'King',       icon: '👑', count: 1, text: 'Trade hands with another player.' },
-  8: { name: 'Countess',   icon: '🌹', count: 1, text: 'Must play if you hold King or Prince.' },
-  9: { name: 'Princess',   icon: '👸', count: 1, text: 'Play or discard this and you\'re out.' },
+  8: { name: 'Countess',   icon: '🌹', count: 1, text: 'Must be played if you also hold the King or Prince.' },
+  9: { name: 'Princess',   icon: '👸', count: 1, text: 'If you play or discard this, you are out.' },
 };
 
 const $ = (id) => document.getElementById(id);
